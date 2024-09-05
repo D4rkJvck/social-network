@@ -31,7 +31,7 @@ const Chatbox: React.FC<ChatboxProps> = ({
                         key={message.id}
                         sender={message.sender}
                         content={message.content}
-                        date={message.sentAt}
+                        sentAt={message.sentAt}
                     />
                 ))}
             </div>

@@ -1,27 +1,44 @@
-import useSWR, { mutate } from "swr";
-
-const fetcher = async (url: string): Promise<any> => {
-  const data = await fetch(url, { credentials: "include", cache: "no-cache" });
-
-  return data.json();
-};
+import axios from "axios";
+import { useEffect, useState } from "react";
 
 const useGetData = <T>(uri: string, mapper?: (obj: any) => T) => {
-  const { data, error, isLoading } = useSWR(
-    "http://localhost:4000" + uri,
-    fetcher
-  );
+  const [data, setData] = useState<T | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<any>(null);
 
-  // const expect= mapper(data?.Datas)
-  const expect = mapper ? mapper(data?.Datas) : data?.Datas;
-  const errorPerso = data?.Errors;
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get("http://localhost:4000" + uri, {
+        withCredentials: true, // This will include cookies in the request
+      });
+
+      // Apply mapper if provided
+      const mappedData = mapper
+        ? mapper(response.data?.Datas)
+        : response.data?.Datas;
+      setData(mappedData);
+
+      if (response.data?.Errors) {
+        setError(response.data?.Errors);
+      }
+    } catch (err) {
+      setError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [uri]);
 
   return {
-    expect,
+    expect: data,
     error,
-    errorPerso,
+    errorPerso: error,
     isLoading,
-    mutate: () => mutate("http://localhost:4000" + uri, true),
+    refetch: fetchData,
   };
 };
 
